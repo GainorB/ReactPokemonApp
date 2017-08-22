@@ -1,9 +1,12 @@
+import axios from 'axios';
 import React, { Component } from 'react';
-import './App.css';
 
+// components
 import Pokemon from './Pokemon';
 import PokeProfile from './PokeProfile';
-import axios from 'axios';
+
+// css
+import './App.css';
 
 export default class App extends Component {
   constructor(props){
@@ -14,64 +17,75 @@ export default class App extends Component {
       name: '',
       weight: '',
       height: '',
-      ability: []
+      image: '',
+      ability: [],
+      gotPokemon: false,
+      gotSinglePokemon: false
     }
+
         this.grabLI = this.grabLI.bind(this);
   }
 
-  componentWillMount(){
-    var getAllPokemon = "http://pokeapi.co/api/v2/pokemon?limit=151";
+  componentDidMount(){
+    const endpoint = "http://pokeapi.co/api/v2/pokemon?limit=151";
 
-    axios.get(getAllPokemon)
-      .then((data) => {
-        //console.log(data);
+    axios.get(endpoint)
+      .then(pokemon => {
 
-        var pokemon = data.data.results;
-
-        this.setState({ pokemon });
+        this.setState({ pokemon: pokemon.data.results, gotPokemon: true });
         this.grabLI();
-    }).catch((err) => console.log(err));
+    })
+    .catch(err => console.log(err));
   }
 
   grabLI = () => {
-    //console.log("grabLi");
     
-    document.querySelectorAll('.poke').forEach((element) => {
-        //console.log(element);
-        
+    document.querySelectorAll('.poke').forEach(element => {
         element.addEventListener('click', () => {
             let id = element.getAttribute('id');
-            //console.log(`old id: ${id}`);
 
             var newIndex = (Number(id)+1);
 
-            //console.log(`new index: ${newIndex}`)
-
-            axios.get('http://pokeapi.co/api/v2/pokemon/'+newIndex).then((data) => {
-              //console.log(data);
-
+            axios.get('http://pokeapi.co/api/v2/pokemon/'+newIndex)
+            .then(pokemon => {
               this.setState({
-                  name: data.data.name,
-                  weight: data.data.weight,
-                  height: data.data.height,
-                  ability: data.data.abilities
-              });
-            }).catch((err) => console.log(err));
-        })
-    })
+                  name: pokemon.data.name,
+                  weight: pokemon.data.weight,
+                  height: pokemon.data.height,
+                  ability: pokemon.data.abilities,
+                  image: pokemon.data.sprites.front_default,
+                  gotSinglePokemon: true
+              })})
+            .catch((err) => console.log(err));
+        });
+    });
+  }
+
+  toggleSinglePokemon(){
+    this.setState({ gotSinglePokemon: false });
   }
 
   render() {
+    const { pokemon, name, weight, height, ability, image, gotPokemon, gotSinglePokemon } = this.state;
+
     return (
       <div className="App">
         <div className="App-header">
           <h2>React Pokemon</h2>
         </div>
-        <Pokemon pokemon={this.state.pokemon}/>
-        <PokeProfile name={this.state.name}
-                     weight={this.state.weight}
-                     height={this.state.height}
-                     ability={this.state.ability} />
+        <Pokemon 
+          pokemon={pokemon}
+          gotPokemon={gotPokemon}
+          toggleSinglePokemon={this.toggleSinglePokemon}
+        />
+        <PokeProfile 
+          name={name}
+          weight={weight}
+          height={height}
+          ability={ability} 
+          image={image}
+          gotSinglePokemon={gotSinglePokemon}
+        />
       </div>
     );
   }
